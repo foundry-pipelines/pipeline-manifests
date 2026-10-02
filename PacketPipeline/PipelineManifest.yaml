@@ -25,14 +25,14 @@ DataSets:
     DataSchema: EnrichedPackets
     Topic: packets.enriched
 
-Transforms:
+Processors:
   XmlToJson:
-    Repo: https://gitlab.com/foundry-platform/enrichers/xmltojsontransformer.git
+    Repo: https://gitlab.com/foundry-platform/enrichers/xmltojsonprocessor.git
     In: Input
     Out: ConvertedPackets
 
   Decode:
-    Repo: https://gitlab.com/foundry-platform/enrichers/decodingtransformer.git
+    Repo: https://gitlab.com/foundry-platform/enrichers/decodingprocessor.git
     In: ConvertedPackets
     Out: Output
 
