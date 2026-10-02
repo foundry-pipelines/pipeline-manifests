@@ -1,8 +1,8 @@
-# yaml-language-server: $schema=https://gitlab.com/foundry-common/scripts/-/jobs/artifacts/main/raw/manifest.schema.json?job=schema
+# yaml-language-server: $schema=https://gitlab.com/foundry-platform/common/scripts/-/jobs/artifacts/main/raw/manifest.schema.json?job=schema
 Name: EnrichmentPipeline
 
 Configs:
-  Repo: https://gitlab.com/foundry-common/configs.git
+  Repo: https://gitlab.com/foundry-platform/common/configs.git
   # Ref: v1   # optional, defaults to main
 
 # DataSchema names a schema in the Configs repo's schemas/ (types in the Foundry.Common.Models package).
@@ -27,16 +27,16 @@ DataSets:
 
 Transforms:
   XmlToJson:
-    Repo: https://gitlab.com/foundry-enrichers/xmltojsontransformer.git
+    Repo: https://gitlab.com/foundry-platform/enrichers/xmltojsontransformer.git
     In: Input
     Out: ConvertedPackets
 
   Decode:
-    Repo: https://gitlab.com/foundry-enrichers/decodingtransformer.git
+    Repo: https://gitlab.com/foundry-platform/enrichers/decodingtransformer.git
     In: ConvertedPackets
     Out: Output
 
   Isp:
-    Repo: https://gitlab.com/foundry-enrichers/IspEnricher.git
+    Repo: https://gitlab.com/foundry-platform/enrichers/IspEnricher.git
     In: ConvertedPackets
     Out: Output
