@@ -5,7 +5,7 @@ Configs:
   Repo: https://gitlab.com/foundry-common/configs.git
   # Ref: v1   # optional, defaults to main
 
-# DataSchema names a schema in the Configs repo's schemas/ (types in the Foundry.Models package).
+# DataSchema names a schema in the Configs repo's schemas/ (types in the Foundry.Common.Models package).
 DataSets:
   Input:
     Type: Kafka
