@@ -1,0 +1,32 @@
+# Renders every pipeline folder's manifest to Kubernetes YAML (manifest.py k8s) and, on main, replaces
+# the contents of gitops/pipeline-deployments with it; ArgoCD applies that repo. Also triggered by
+# configs changes and processor image builds, since both change the rendered output.
+stages: [render, publish]
+
+render:
+  stage: render
+  image: python:3.12
+  script:
+    - pip install --quiet pyyaml
+    - git clone --quiet --depth 1 https://gitlab.com/foundry-platform/common/scripts.git /tmp/scripts
+    - for m in */PipelineManifest.yaml; do python /tmp/scripts/manifest/manifest.py k8s "$m" -o "out/$(dirname "$m")"; done
+  artifacts:
+    paths: [out/]
+
+publish:
+  stage: publish
+  image: python:3.12
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  resource_group: gitops  # one push at a time
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - chmod 600 "$GITOPS_DEPLOY_KEY"
+    - export GIT_SSH_COMMAND="ssh -i $GITOPS_DEPLOY_KEY -o StrictHostKeyChecking=accept-new"
+    - git clone --quiet git@gitlab.com:foundry-platform/gitops/pipeline-deployments.git deploy
+    - cd deploy
+    - git rm -rq --ignore-unmatch -- . ':!.argocd' && cp -r ../out/. . && git add -A  # .argocd/: the bootstrap, kept
+    - git diff --cached --quiet && echo "no changes" && exit 0
+    - git -c user.name="foundry-pipelines CI" -c user.email="noreply@gitlab.com" commit -qm "Render foundry-pipelines@$CI_COMMIT_SHORT_SHA ($CI_PIPELINE_SOURCE)"
+    - git push --quiet origin HEAD:main
