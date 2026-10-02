@@ -1,7 +1,6 @@
-# Renders every pipeline folder's manifest to Kubernetes YAML (manifest.py k8s) and, on main, replaces
-# the contents of gitops/pipeline-deployments with it; ArgoCD applies that repo. Also triggered by
-# configs changes and processor image builds, since both change the rendered output.
-stages: [render, publish]
+# Renders every pipeline folder's manifest to Kubernetes YAML (manifest.py k8s) and, on main, applies it
+# to the cluster (scripts/deploy/deploy.sh). Also triggered by configs changes and processor image builds.
+stages: [render, deploy]
 
 render:
   stage: render
@@ -13,20 +12,17 @@ render:
   artifacts:
     paths: [out/]
 
-publish:
-  stage: publish
+deploy:
+  stage: deploy
   image: python:3.12
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  resource_group: gitops  # one push at a time
+  resource_group: deploy  # one deploy at a time
   variables:
-    GIT_STRATEGY: none
+    KUBE_SERVER: https://haltura.me/k8s/clusters/local  # Rancher's proxy; KUBE_TOKEN is a Rancher API token
   script:
-    - chmod 600 "$GITOPS_DEPLOY_KEY"
-    - export GIT_SSH_COMMAND="ssh -i $GITOPS_DEPLOY_KEY -o StrictHostKeyChecking=accept-new"
-    - git clone --quiet git@gitlab.com:foundry-platform/gitops/pipeline-deployments.git deploy
-    - cd deploy
-    - git rm -rq --ignore-unmatch -- . ':!.argocd' && cp -r ../out/. . && git add -A  # .argocd/: the bootstrap, kept
-    - git diff --cached --quiet && echo "no changes" && exit 0
-    - git -c user.name="foundry-pipelines CI" -c user.email="noreply@gitlab.com" commit -qm "Render foundry-pipelines@$CI_COMMIT_SHORT_SHA ($CI_PIPELINE_SOURCE)"
-    - git push --quiet origin HEAD:main
+    - curl -sSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x /usr/local/bin/kubectl
+    - kubectl config set-cluster foundry --server="$KUBE_SERVER" && kubectl config set-credentials ci --token="$KUBE_TOKEN"
+    - kubectl config set-context foundry --cluster=foundry --user=ci && kubectl config use-context foundry
+    - git clone --quiet --depth 1 https://gitlab.com/foundry-platform/common/scripts.git /tmp/scripts
+    - /tmp/scripts/deploy/deploy.sh out/*/
