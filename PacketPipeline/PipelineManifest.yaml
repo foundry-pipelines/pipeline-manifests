@@ -19,6 +19,13 @@ DataSets:
     DataSchema: Packets
     Topic: enrichment.packets
 
+  # Decode and Isp each write their enrichment of a packet here, keyed by its guid.
+  Enrichments:
+    Type: Kafka
+    Config: kafka/prod
+    DataSchema: [DecodeEnrichment, IspEnrichment]
+    Topic: packets.enrichments
+
   Output:
     Type: Kafka
     Config: kafka/prod
@@ -34,9 +41,16 @@ Processors:
   Decode:
     Repo: https://gitlab.com/foundry-platform/enrichers/decodingprocessor.git
     In: ConvertedPackets
-    Out: Output
+    Out: Enrichments
 
   Isp:
     Repo: https://gitlab.com/foundry-platform/enrichers/IspEnricher.git
     In: ConvertedPackets
+    Out: Enrichments
+
+  # Puts each packet together with its enrichments (stateful, windowed).
+  Join:
+    Repo: https://gitlab.com/foundry-platform/enrichers/packetjoiner.git
+    Runtime: flink
+    In: [ConvertedPackets, Enrichments]
     Out: Output
