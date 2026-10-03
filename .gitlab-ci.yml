@@ -13,7 +13,7 @@ validate:
   stage: validate
   script:
     - python /tmp/scripts/validators/pipelines/cycles.py */PipelineManifest.yaml
-    - python /tmp/scripts/validators/pipelines/types.py */PipelineManifest.yaml
+    - python /tmp/scripts/validators/pipelines/typecheck.py */PipelineManifest.yaml
 
 render:
   stage: render
