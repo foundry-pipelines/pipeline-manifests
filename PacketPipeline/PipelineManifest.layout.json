@@ -1,0 +1,37 @@
+{
+  "positions": {
+    "Decoder": {
+      "x": 900,
+      "y": -260
+    },
+    "IspEnricher": {
+      "x": 900,
+      "y": -130
+    },
+    "Joiner": {
+      "x": 1500,
+      "y": -120
+    },
+    "XmlToJsonConverter": {
+      "x": 300,
+      "y": -45
+    },
+    "dataset:ConvertedPackets": {
+      "x": 600,
+      "y": -45
+    },
+    "dataset:Enrichments": {
+      "x": 1200,
+      "y": -195
+    },
+    "dataset:Input": {
+      "x": 0,
+      "y": -45
+    },
+    "dataset:Output": {
+      "x": 1800,
+      "y": -120
+    }
+  },
+  "version": 1
+}
