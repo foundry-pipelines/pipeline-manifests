@@ -1,56 +1,58 @@
 # yaml-language-server: $schema=https://gitlab.com/foundry-platform/common/scripts/-/jobs/artifacts/main/raw/manifest.schema.json?job=schema
 Name: EnrichmentPipeline
 
-Configs:
-  Repo: https://gitlab.com/foundry-platform/common/configs.git
-  # Ref: v1   # optional, defaults to main
+ConfigRegistry:
+  Repo: https://gitlab.com/foundry-platform/common/configRegistry.git
+  Ref: main #non optional!
 
-# DataSchema names a schema in the Configs repo's schemas/ (types in the Foundry.Common.Models package).
-DataSets:
-  Input:
-    Type: Kafka
+Kafkas:
+  Input: #mandatory
     Config: kafka/prod
-    DataSchema: XmlPackets
+    AllowedTypes: [XmlPackets]
     Topic: raw.xml
 
   ConvertedPackets:
-    Type: Kafka
     Config: kafka/prod
-    DataSchema: Packets
+    AllowedTypes: [Packets]
     Topic: enrichment.packets
 
-  # Decode and Isp each write their enrichment of a packet here, keyed by its guid.
   Enrichments:
-    Type: Kafka
     Config: kafka/prod
-    DataSchema: [DecodeEnrichment, IspEnrichment]
+    AllowedTypes: [DecodeEnrichment, IspEnrichment]
     Topic: packets.enrichments
 
-  Output:
-    Type: Kafka
+  Output: #mandatory
     Config: kafka/prod
-    DataSchema: EnrichedPackets
+    AllowedTypes: [EnrichedPackets]
     Topic: packets.enriched
 
 Processors:
-  XmlToJson:
-    Repo: https://gitlab.com/foundry-platform/enrichers/xmltojsonprocessor.git
-    In: Input
-    Out: ConvertedPackets
+  XmlToJsonConverter:
+    Repo: https://gitlab.com/foundry-platform/operators/xmltojsonprocessor.git
+    Ref: main
 
-  Decode:
-    Repo: https://gitlab.com/foundry-platform/enrichers/decodingprocessor.git
-    In: ConvertedPackets
-    Out: Enrichments
+  Decoder:
+    Repo: https://gitlab.com/foundry-platform/operators/decodingprocessor.git
+    Ref: main
 
-  Isp:
-    Repo: https://gitlab.com/foundry-platform/enrichers/IspEnricher.git
-    In: ConvertedPackets
-    Out: Enrichments
+  IspEnricher:
+    Repo: https://gitlab.com/foundry-platform/operators/IspEnricher.git
+    Ref: main
 
-  # Puts each packet together with its enrichments (stateful, windowed).
-  Join:
-    Repo: https://gitlab.com/foundry-platform/enrichers/packetjoiner.git
-    Runtime: flink
-    In: [ConvertedPackets, Enrichments]
-    Out: Output
+  Joiner:
+    Repo: https://gitlab.com/foundry-platform/operators/packetjoiner.git
+    Ref: main
+
+Flow:
+    - Input -> XmlToJsonConverter
+    - XmlToJsonConverter -> ConvertedPackets
+
+    - ConvertedPackets -> Decoder
+    - ConvertedPackets -> IspEnricher
+
+    - Decoder -> Enrichments
+    - IspEnricher -> Enrichments
+
+    - ConvertedPackets -> Joiner
+    - Enrichments -> Joiner
+    - Joiner -> Output
