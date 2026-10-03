@@ -7,7 +7,9 @@ default:
   image: python:3.12
   before_script:
     - pip install --quiet pyyaml
-    - git clone --quiet --depth 1 https://gitlab.com/foundry-platform/common/scripts.git /tmp/scripts
+    # Internal projects: clones of this GitLab use the job token (pipelines must be on their job token allowlists).
+    - git config --global url."${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/".insteadOf "${CI_SERVER_URL}/"
+    - git clone --quiet --depth 1 ${CI_SERVER_URL}/foundry-platform/common/scripts.git /tmp/scripts
 
 validate:
   stage: validate
