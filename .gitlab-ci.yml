@@ -1,25 +1,25 @@
-# Validates every pipeline folder's manifest (scripts' validators/pipelines), renders it to Kubernetes YAML
-# (deploy/render.py) and, on main, applies it to the cluster (deploy/deploy.sh).
+# Validates every pipeline folder's manifest (foundry-ci's pipeline/validate), renders it to Kubernetes YAML
+# (pipeline/deploy/render.py) and, on main, applies it to the cluster (pipeline/deploy/deploy.sh).
 stages: [validate, render, deploy]
 
 default:
   image: python:3.12
   before_script:
     - pip install --quiet pyyaml
-    # Internal projects: clones of this GitLab use the job token (pipelines must be on their job token allowlists).
+    # Internal projects: clones of this GitLab use the job token (pipeline-manifests must be on their job token allowlists).
     - git config --global url."${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/".insteadOf "${CI_SERVER_URL}/"
-    - git clone --quiet --depth 1 ${CI_SERVER_URL}/foundry-platform/common/scripts.git /tmp/scripts
+    - git clone --quiet --depth 1 ${CI_SERVER_URL}/foundry-platform/foundry-ci.git /tmp/foundry-ci
 
 validate:
   stage: validate
   script:
-    - python /tmp/scripts/validators/pipelines/cycles.py */PipelineManifest.yaml
-    - python /tmp/scripts/validators/pipelines/typecheck.py */PipelineManifest.yaml
+    - python /tmp/foundry-ci/pipeline/validate/cycles.py */PipelineManifest.yaml
+    - python /tmp/foundry-ci/pipeline/validate/typecheck.py */PipelineManifest.yaml
 
 render:
   stage: render
   script:
-    - for m in */PipelineManifest.yaml; do python /tmp/scripts/deploy/render.py "$m" -o "out/$(dirname "$m")"; done
+    - for m in */PipelineManifest.yaml; do python /tmp/foundry-ci/pipeline/deploy/render.py "$m" -o "out/$(dirname "$m")"; done
   artifacts:
     paths: [out/]
 
@@ -34,4 +34,4 @@ deploy:
     - curl -sSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x /usr/local/bin/kubectl
     - kubectl config set-cluster foundry --server="$KUBE_SERVER" && kubectl config set-credentials ci --token="$KUBE_TOKEN"
     - kubectl config set-context foundry --cluster=foundry --user=ci && kubectl config use-context foundry
-    - /tmp/scripts/deploy/deploy.sh out/*/
+    - /tmp/foundry-ci/pipeline/deploy/deploy.sh out/*/

@@ -1,7 +1,7 @@
 Name: EnrichmentPipeline
 
 ConfigRegistry:
-  Repo: foundry-platform/common/configRegistry
+  Repo: foundry-platform/registries/config-registry
   Ref: main #non optional!
 
 Kafkas:
@@ -27,19 +27,19 @@ Kafkas:
 
 Processors:
   XmlToJsonConverter:
-    Repo: foundry-platform/operators/xmltojsonprocessor
+    Repo: foundry-platform/example-operators/xml-parser
     Ref: main
 
   Decoder:
-    Repo: foundry-platform/operators/decodingprocessor
+    Repo: foundry-platform/example-operators/decoder
     Ref: main
 
   IspEnricher:
-    Repo: foundry-platform/operators/IspEnricher
+    Repo: foundry-platform/example-operators/isp-enricher
     Ref: main
 
   Joiner:
-    Repo: foundry-platform/operators/packetjoiner
+    Repo: foundry-platform/example-operators/packet-joiner
     Ref: main
 
 Flow:
