@@ -1,6 +1,5 @@
 # Validates every pipeline folder's manifest (scripts' validators/pipelines), renders it to Kubernetes YAML
-# (deploy/render.py) and, on main, applies it to the cluster (deploy/deploy.sh). Also triggered by
-# configRegistry changes and processor image builds.
+# (deploy/render.py) and, on main, applies it to the cluster (deploy/deploy.sh).
 stages: [validate, render, deploy]
 
 default:
